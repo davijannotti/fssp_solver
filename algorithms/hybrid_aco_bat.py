@@ -32,7 +32,7 @@ class HybridAcoBatFSSP:
             position[job_index] = priorities[i]
         return position
 
-    def run(self, verbose=True, track_convergence=False):
+    def run(self, verbose=False, track_convergence=False):
         """
         Executes the hybrid ACO-BA algorithm.
         """
@@ -41,7 +41,7 @@ class HybridAcoBatFSSP:
             print("--- Phase 1: Running Ant Colony Optimization ---")
         aco = AntColonyOptimizer(self.processing_times, **self.aco_params)
         aco_elite_solutions = aco.run()
-        
+
         # Select the top unique elite sequences from ACO
         elite_sequences = []
         seen_sequences = set()
@@ -51,7 +51,7 @@ class HybridAcoBatFSSP:
                 seen_sequences.add(tuple(seq))
             if len(elite_sequences) >= self.num_elites_for_ba:
                 break
-        
+
         if verbose:
             print(f"ACO found {len(elite_sequences)} unique elite solutions to seed the Bat Algorithm.")
             print("ACO Best Makespan:", aco.best_makespan)
@@ -121,9 +121,8 @@ if __name__ == '__main__':
         bat_params=bat_parameters,
         **hybrid_params
     )
-    
+
     best_sequence, best_makespan = hybrid_solver.run()
 
     print(f"\nFinal Best Sequence: {best_sequence}")
     print(f"Final Best Makespan (C_max): {best_makespan}")
-

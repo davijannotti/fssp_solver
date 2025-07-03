@@ -9,8 +9,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from fssp_solver.algorithms.core import load_instance
-from fssp_solver.algorithms.genetic import GeneticAlgorithmFSSP
+from algorithms.core import load_instance
+from algorithms.genetic import GeneticAlgorithmFSSP
 
 # --- Funções Auxiliares para Geração de Relatórios ---
 
@@ -98,7 +98,7 @@ def run_single_config(config):
 
 def main():
     # Carrega a instância
-    instance_filepath = 'fssp_solver/instances/fssp_instance_04.txt'
+    instance_filepath = '../instances/fssp_instance_05.txt'
     processing_times = load_instance(instance_filepath)
 
     # Parâmetros fixos

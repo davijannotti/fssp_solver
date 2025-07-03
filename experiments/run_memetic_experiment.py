@@ -88,7 +88,7 @@ def run_single_memetic_config(config):
 # --- Script Principal ---
 
 def main():
-    instance_filepath = '../instances/fssp_instance_05.txt'
+    instance_filepath = '../instances/fssp_instance_07.txt'
     processing_times = load_instance(instance_filepath)
 
     # Parâmetros fixos (ajustados para um experimento mais rápido)

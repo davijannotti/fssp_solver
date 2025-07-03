@@ -18,20 +18,21 @@ def generate_latex_table(results_df, filename="hybrid_results.tex"):
     """Gera uma tabela LaTeX com os resultados do experimento híbrido."""
     df_sorted = results_df.sort_values(by='mean_makespan').reset_index(drop=True)
 
-    latex_str = "\\begin{table}[h!]\n"
-    latex_str += "\centering\n"
-    latex_str += "\caption{Resultados do Experimento Fatorial do Algoritmo Híbrido ACO-BA}\n"
-    latex_str += "\label{tab:hybrid_results}\n"
-    latex_str += "\\begin{tabular}{cccccc} \\ \hline \n"
-    latex_str += "\\textbf{Rank} & \\textbf{Alpha (ACO)} & \\textbf{Rho (ACO)} & \\textbf{Loudness (BA)} & \\textbf{Pulse Rate (BA)} & \\textbf{Makespan (Média \\pm DP)} \\ \\ \\ \hline \n"
+    latex_str = r"""\begin{table}[h!]
+\centering
+\caption{Resultados do Experimento Fatorial do Algoritmo Híbrido ACO-BA}
+\label{tab:hybrid_results}
+\begin{tabular}{cccccc} \ \hline
+\textbf{Rank} & \textbf{Alpha (ACO)} & \textbf{Rho (ACO)} & \textbf{Loudness (BA)} & \textbf{Pulse Rate (BA)} & \textbf{Makespan (Média \pm DP)} \ \ \hline
+"""
 
     for i, row in df_sorted.head(15).iterrows():
-        makespan_str = f"${row['mean_makespan']:.2f} \\pm {row['std_makespan']:.2f}$"
-        latex_str += f"{i+1} & {row['alpha']:.2f} & {row['rho']:.2f} & {row['loudness']:.2f} & {row['pulse_rate']:.2f} & {makespan_str} \\ \n"
+        makespan_str = f"${row['mean_makespan']:.2f} \pm {row['std_makespan']:.2f}$"
+        latex_str += f"{i+1} & {row['alpha']:.2f} & {row['rho']:.2f} & {row['loudness']:.2f} & {row['pulse_rate']:.2f} & {makespan_str} \ \n"
 
-    latex_str += "\\hline \n"
-    latex_str += "\end{tabular} \n"
-    latex_str += "\end{table}"
+    latex_str += r"""\hline
+\end{tabular}
+\end{table}"""
 
     with open(filename, 'w') as f:
         f.write(latex_str)
@@ -87,18 +88,22 @@ def run_single_hybrid_config(config):
 # --- Script Principal ---
 
 def main():
-    instance_filepath = '../instances/fssp_instance_05.txt'
+    # Obtém o caminho absoluto para o diretório do projeto
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    instance_filepath = os.path.join(project_dir, 'instances', 'fssp_instance_05.txt')
+
     processing_times = load_instance(instance_filepath)
 
     # Parâmetros fixos
-    N_RUNS = 5
+    N_RUNS = 10
     ACO_GENERATIONS = 100
-    BAT_GENERATIONS = 100
-    NUM_ELITES_FOR_BA = 10
+    BAT_GENERATIONS = 0
+    NUM_ELITES_FOR_BA = 5
 
     # Espaço de parâmetros a ser explorado
     param_space = {
         'alpha': [0.5, 1.0, 2.0],  # Parâmetro do ACO
+        'beta': [1.0, 2.0, 3.0],  # Parâmetro do ACO
         'evaporation_rate': [0.3, 0.5, 0.7], # Parâmetro do ACO (rho)
         'loudness_initial': [0.8, 0.95], # Parâmetro do BA
         'pulse_rate_initial': [0.4, 0.6]  # Parâmetro do BA (r)
@@ -113,8 +118,8 @@ def main():
             'n_ants': 30,
             'n_generations': ACO_GENERATIONS,
             'alpha': params['alpha'],
-            'beta': 2.0, # Fixo
-            'evaporation_rate': params['evaporation_rate'],
+            'beta': params['beta'],
+            'evaporation_rate': 0.3,
             'q0': 0.9 # Fixo
         }
         bat_params = {
@@ -154,8 +159,12 @@ def main():
         'convergence_histories': r['convergence_histories']
     } for r in results])
 
-    generate_latex_table(results_df, filename="../results/hybrid_results.tex")
-    generate_convergence_plot(results_df, filename="../results/hybrid_convergence.png")
+    # Define os caminhos absolutos para os arquivos de saída
+    latex_output_path = os.path.join(project_dir, 'results', 'hybrid_results.tex')
+    plot_output_path = os.path.join(project_dir, 'results', 'hybrid_convergence.png')
+
+    generate_latex_table(results_df, filename=latex_output_path)
+    generate_convergence_plot(results_df, filename=plot_output_path)
 
 if __name__ == "__main__":
     main()
