@@ -11,7 +11,7 @@ def main():
     Script principal para resolver uma instância do FSSP com o Algoritmo Genético.
     """
     # 1. Carregar a instância do FSSP
-    instance_filepath = 'fssp_solver/instances/fssp_instance_04.txt'
+    instance_filepath = './instances/fssp_instance_05.txt'
     print(f"Carregando instância de: {instance_filepath}")
     processing_times = load_instance(instance_filepath)
     print(f"Instância carregada: {processing_times.shape[0]} tarefas, {processing_times.shape[1]} máquinas.")
