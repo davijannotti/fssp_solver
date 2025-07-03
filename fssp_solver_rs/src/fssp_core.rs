@@ -1,5 +1,6 @@
+use std::cmp::max;
 use std::fs::File;
-use std::io::{BufRead, BufReader, ErrorKind};
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -61,37 +62,37 @@ pub fn load_instance(filepath: &str) -> Result<FSSPInstance, std::io::Error> {
         processing_times,
     })
 }
+impl FSSPInstance {
+    pub fn calculate_makespan(&self, sequence: &[usize]) -> u32 {
+        // A matriz C armazena os tempos de conclusão.
+        // c[i][j] é o tempo de conclusão da j-ésima tarefa da sequência na máquina i.
+        let mut c = vec![vec![0; self.n_jobs]; self.n_machines];
 
-pub fn calculate_makespan(instance: &FSSPInstance, sequence: &[usize]) -> u32 {
-    let n_jobs = instance.n_jobs;
-    let n_machines = instance.n_machines;
-    let mut completion_times = vec![vec![0u32; n_machines]; n_jobs];
+        // Calcula os tempos de conclusão
+        for j in 0..self.n_jobs {
+            // Para cada tarefa na sequência
+            for i in 0..self.n_machines {
+                // Para cada máquina
+                let job_index = sequence[j];
+                let p_time = self.processing_times[job_index][i];
 
-    // Primeira tarefa na sequência
-    let first_job_id = sequence[0];
-    completion_times[0][0] = instance.processing_times[first_job_id][0];
-    for m_idx in 1..n_machines {
-        completion_times[0][m_idx] =
-            completion_times[0][m_idx - 1] + instance.processing_times[first_job_id][m_idx];
-    }
-
-    // Demais tarefas na sequência
-    for j_idx in 1..n_jobs {
-        // j_idx é o índice na *sequência*
-        let current_job_id = sequence[j_idx];
-
-        // Primeira máquina
-        completion_times[j_idx][0] =
-            completion_times[j_idx - 1][0] + instance.processing_times[current_job_id][0];
-
-        // Demais máquinas
-        for m_idx in 1..n_machines {
-            completion_times[j_idx][m_idx] = u32::max(
-                completion_times[j_idx - 1][m_idx], // Conclusão da tarefa anterior na mesma máquina
-                completion_times[j_idx][m_idx - 1], // Conclusão desta tarefa na máquina anterior
-            ) + instance.processing_times[current_job_id][m_idx];
+                if i == 0 && j == 0 {
+                    // Primeira tarefa na primeira máquina
+                    c[i][j] = p_time;
+                } else if i == 0 {
+                    // Tarefas seguintes na primeira máquina
+                    c[i][j] = c[i][j - 1] + p_time;
+                } else if j == 0 {
+                    // Primeira tarefa nas máquinas seguintes
+                    c[i][j] = c[i - 1][j] + p_time;
+                } else {
+                    // Todas as outras
+                    c[i][j] = max(c[i - 1][j], c[i][j - 1]) + p_time;
+                }
+            }
         }
-    }
 
-    completion_times[n_jobs - 1][n_machines - 1]
+        // O makespan é o tempo de conclusão da última tarefa na última máquina.
+        c[self.n_machines - 1][self.n_jobs - 1]
+    }
 }

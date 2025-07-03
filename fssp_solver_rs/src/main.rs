@@ -3,7 +3,6 @@ mod solver; // Mude de 'genetic_algorithm' para 'solver'
 
 use fssp_core::load_instance;
 use solver::MemeticAlgorithm;
-use std::env;
 use std::time::Instant; // Mude o nome da classe se necessário
 
 fn main() {
@@ -17,9 +16,9 @@ fn main() {
     );
 
     // Parâmetros do Algoritmo Memético
-    let population_size = 50;
-    let generations = 500;
-    let mutation_rate = 0.05;
+    let population_size = 30;
+    let generations = 100;
+    let mutation_rate = 0.3;
     let local_search_rate = 0.3;
 
     let start_time = Instant::now();

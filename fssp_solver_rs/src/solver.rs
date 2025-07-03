@@ -1,4 +1,4 @@
-use crate::fssp_core::{calculate_makespan, FSSPInstance};
+use crate::fssp_core::FSSPInstance;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
@@ -41,22 +41,16 @@ impl MemeticAlgorithm {
         for gen in 0..self.generations {
             self._evaluate_fitness();
 
-            let parents_indices = self._selection_tournament();
-            let mut next_population = self._crossover(&parents_indices);
-
-            self._mutation(&mut next_population);
-            self._apply_local_search(&mut next_population);
-            self._elitism(&mut next_population);
-
-            self.population = next_population;
-
-            let current_best_idx = self
+            let (current_best_idx, current_best_fitness) = self
                 .fitness
                 .iter()
-                .position(|&f| f == *self.fitness.iter().min().unwrap())
+                .enumerate()
+                .min_by_key(|&(_, f)| f)
+                .map(|(idx, &f)| (idx, f))
                 .unwrap();
-            if self.fitness[current_best_idx] < self.best_makespan {
-                self.best_makespan = self.fitness[current_best_idx];
+
+            if current_best_fitness < self.best_makespan {
+                self.best_makespan = current_best_fitness;
                 self.best_sequence = self.population[current_best_idx].clone();
             }
 
@@ -67,12 +61,58 @@ impl MemeticAlgorithm {
                     self.best_makespan
                 );
             }
+
+            let parents_indices = self._selection_tournament();
+            let mut next_population = self._crossover(&parents_indices);
+            self._mutation(&mut next_population);
+            self._apply_local_search(&mut next_population);
+            self._elitism(&mut next_population);
+
+            self.population = next_population;
         }
     }
 
     fn _initialize_population(&mut self) {
+        // Garante que a população esteja vazia antes de começar.
+        self.population.clear();
+
+        // 1. Calcula a soma dos tempos de processamento para cada tarefa (job).
+        let mut job_metrics: Vec<(usize, u32)> = (0..self.instance.n_jobs)
+            .map(|job_idx| {
+                let total_time: u32 = self.instance.processing_times[job_idx].iter().sum();
+                (job_idx, total_time)
+            })
+            .collect();
+
+        // 2. Cria a primeira solução gulosa (ordenada do menor para o maior tempo total).
+        // Esta verificação garante que não haja pânico se o tamanho da população for 0.
+        if self.population_size > 0 {
+            // Ordena as tarefas pela soma de seus tempos.
+            job_metrics.sort_by_key(|&(_, total_time)| total_time);
+
+            let greedy_solution_asc: Vec<usize> =
+                job_metrics.iter().map(|&(job_idx, _)| job_idx).collect();
+            self.population.push(greedy_solution_asc);
+        }
+
+        // 3. Cria a segunda solução gulosa (ordenada do maior para o menor tempo total).
+        // Esta verificação garante que não haja pânico se o tamanho da população for < 2.
+        if self.population_size > 1 {
+            let greedy_solution_desc: Vec<usize> = job_metrics
+                .iter()
+                .rev() // Apenas inverte a lista já ordenada. É mais eficiente.
+                .map(|&(job_idx, _)| job_idx)
+                .collect();
+            self.population.push(greedy_solution_desc);
+        }
+
+        // 4. Preenche o resto da população com soluções aleatórias.
         let mut rng = rand::thread_rng();
-        for _ in 0..self.population_size {
+        // Calcula quantos indivíduos aleatórios ainda precisam ser gerados.
+        // `saturating_sub` evita pânico se self.population_size for < 2.
+        let num_random_to_generate = self.population_size.saturating_sub(self.population.len());
+
+        for _ in 0..num_random_to_generate {
             let mut random_solution: Vec<usize> = (0..self.instance.n_jobs).collect();
             random_solution.shuffle(&mut rng);
             self.population.push(random_solution);
@@ -83,7 +123,7 @@ impl MemeticAlgorithm {
         self.fitness = self
             .population
             .iter()
-            .map(|seq| calculate_makespan(&self.instance, seq))
+            .map(|seq| (&self.instance).calculate_makespan(seq))
             .collect();
     }
 
@@ -180,14 +220,14 @@ impl MemeticAlgorithm {
     }
 
     fn _local_search_swap(&self, sequence: &mut Vec<usize>) {
-        let mut current_makespan = calculate_makespan(&self.instance, sequence);
+        let mut current_makespan = (&self.instance).calculate_makespan(sequence);
         let mut improved = true;
         while improved {
             improved = false;
             for i in 0..self.instance.n_jobs {
                 for j in (i + 1)..self.instance.n_jobs {
                     sequence.swap(i, j);
-                    let new_makespan = calculate_makespan(&self.instance, sequence);
+                    let new_makespan = (&self.instance).calculate_makespan(sequence);
                     if new_makespan < current_makespan {
                         current_makespan = new_makespan;
                         improved = true;
@@ -211,7 +251,7 @@ impl MemeticAlgorithm {
 
         let fitness_next_pop: Vec<u32> = next_population
             .iter()
-            .map(|seq| calculate_makespan(&self.instance, seq))
+            .map(|seq| (&self.instance).calculate_makespan(seq))
             .collect();
 
         let worst_idx = fitness_next_pop
