@@ -1,8 +1,5 @@
-mod fssp_core;
-mod solver; // Mude de 'genetic_algorithm' para 'solver'
-
-use fssp_core::load_instance;
-use solver::MemeticAlgorithm;
+use fssp_solver_rs::fssp_core::load_instance;
+use fssp_solver_rs::solver::MemeticAlgorithm;
 use std::time::Instant; // Mude o nome da classe se necessário
 
 fn main() {
