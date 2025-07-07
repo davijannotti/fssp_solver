@@ -4,13 +4,11 @@ use rayon::prelude::*;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
-use std::sync::Arc;
 
 fn main() -> io::Result<()> {
     // 1. Carrega a instância mais desafiadora (`fssp_instance_05.txt`).
-    let instance_path = "/home/davi/Code/fssp_solver/fssp_solver_rs/src/instances/fssp_instance_05.txt";
-    let instance = load_instance(instance_path)
-        .expect("Failed to load FSSP instance");
+    let instance_path = "./src/instances/fssp_instance_05.txt";
+    let instance = load_instance(instance_path).expect("Failed to load FSSP instance");
 
     // 2. Define uma gama de parâmetros a serem testados para o Algoritmo Memético
     let population_sizes = vec![50, 100];
@@ -32,35 +30,37 @@ fn main() -> io::Result<()> {
     }
 
     // Process combinations em paralelo
-    let results: Vec<String> = all_combinations.par_iter().map(|&(pop_size, gens, mut_rate, ls_rate)| {
-        let mut makespans = Vec::with_capacity(num_runs);
-        for _ in 0..num_runs {
-            let current_instance = instance.clone(); // Clona a instância para cada execução
-            let mut solver = MemeticAlgorithm::new(
-                current_instance,
-                pop_size,
-                gens,
-                mut_rate,
-                ls_rate,
-            );
-            solver.run();
-            makespans.push(solver.best_makespan);
-        }
+    let results: Vec<String> = all_combinations
+        .par_iter()
+        .map(|&(pop_size, gens, mut_rate, ls_rate)| {
+            let mut makespans = Vec::with_capacity(num_runs);
+            for _ in 0..num_runs {
+                let current_instance = instance.clone(); // Clona a instância para cada execução
+                let mut solver =
+                    MemeticAlgorithm::new(current_instance, pop_size, gens, mut_rate, ls_rate);
+                solver.run();
+                makespans.push(solver.best_makespan);
+            }
 
-        let sum: u32 = makespans.iter().sum();
-        let mean = sum as f64 / num_runs as f64;
+            let sum: u32 = makespans.iter().sum();
+            let mean = sum as f64 / num_runs as f64;
 
-        let variance = makespans.iter().map(|&m| {
-            let diff = m as f64 - mean;
-            diff * diff
-        }).sum::<f64>() / num_runs as f64;
-        let std_dev = variance.sqrt();
+            let variance = makespans
+                .iter()
+                .map(|&m| {
+                    let diff = m as f64 - mean;
+                    diff * diff
+                })
+                .sum::<f64>()
+                / num_runs as f64;
+            let std_dev = variance.sqrt();
 
-        format!(
-            "{},{},{},{},{:.2},{:.2}",
-            pop_size, gens, mut_rate, ls_rate, mean, std_dev
-        )
-    }).collect();
+            format!(
+                "{},{},{},{},{:.2},{:.2}",
+                pop_size, gens, mut_rate, ls_rate, mean, std_dev
+            )
+        })
+        .collect();
 
     // 5. Salva os resultados em um arquivo `results.csv`
     let output_path = Path::new("results.csv");
@@ -75,4 +75,3 @@ fn main() -> io::Result<()> {
 
     Ok(())
 }
-

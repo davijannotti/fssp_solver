@@ -6,7 +6,19 @@ edition = "2021"
 [dependencies]
 rand = "0.8"
 rayon = "1.5"
+clap = { version = "4.5.7", features = ["derive"] }
 
 [[bin]]
 name = "experiment"
 path = "src/bin/experiment.rs"
+
+[profile.release]
+opt-level = 3     # Nível de otimização LLVM: 0 (nenhuma) a 3 (completa) ou "s"/"z" (tamanho)
+debug = false     # Não inclui informações de depuração no binário
+lto = true        # Ativa Link-Time Optimization: Otimiza todo o crate de uma vez. Essencial para máximo desempenho.
+codegen-units = 1 # Reduz unidades de compilação: Permite otimizações mais globais pelo LLVM.
+# Pode aumentar o tempo de compilação, mas melhora o desempenho do binário.
+panic = 'abort' # Em caso de pânico (panic!), o programa aborta imediatamente.
+# Reduz o tamanho do binário e pode ser marginalmente mais rápido.
+strip = "symbols" # Remove símbolos de depuração e de tabela de símbolos.
+# Reduz o tamanho final do binário sem afetar o desempenho.
