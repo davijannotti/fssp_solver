@@ -14,7 +14,7 @@ struct Cli {
     instance_path: PathBuf,
 
     /// Número máximo de gerações que o algoritmo irá executar.
-    #[arg(long, default_value_t = 1000000)]
+    #[arg(long, default_value_t = 100)]
     max_generations: usize,
 
     /// Duração máxima da execução em segundos. O algoritmo encerrará se exceder este tempo.

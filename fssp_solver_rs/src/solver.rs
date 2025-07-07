@@ -161,7 +161,7 @@ impl MemeticAlgorithm {
         parents
     }
 
-    /// Realiza o cruzamento (PMX) entre pares de pais para gerar filhos.
+    /// Realiza o cruzamento (OX) entre pares de pais para gerar filhos.
     fn _crossover(&self, parents: &[usize]) -> Vec<Vec<usize>> {
         let mut children = Vec::with_capacity(self.population_size);
         let mut rng = rand::thread_rng();
